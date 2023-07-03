@@ -17,8 +17,8 @@ This project is implemented using pure JavaScript, HTML, and CSS. It utilizes th
 
 To use this project, follow these steps:
 
-1. Clone the repository: `git clone https://github.com/your-username/repository-name.git`
-2. Open the project folder: `cd repository-name`
+1. Clone the repository: `git clone https://github.com/your-username/Process-Scheduling-Simulation.`
+2. Open the project folder: `cd Process-Scheduling-Simulation`
 3. Open the `app.html` file in your preferred web browser.
 
 ## Contributing
