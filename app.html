@@ -1,0 +1,418 @@
+<!-- Create Webpage using bootstrap and chartjs that takes the details about the execution time and time period of the processes, and the program will generate corresponding Gantt Chart for Rate Monotonic, and Earliest Deadline First algorithms are used for real time shceduling in the Operating Systems. Furthemore, it also has to tell whether the processes are schedulabale or not. User can add as many  -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Gantt Chart for Real-time Scheduling</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+</head>
+
+<body>
+    <div class="container">
+        <form id="process-form">
+            <div class="input-group mb-3">
+                <span class="input-group-text">Number of processes</span>
+                <input type="number" class="form-control" id="num-processes" required>
+            </div>
+            <button type="button" class="btn btn-secondary" id="generate-processes">Generate Input Fields</button>
+            <div id="process-inputs"></div>
+            <button type="submit" class="btn btn-primary mt-3">Generate Gantt Chart</button>
+        </form>
+    </div>
+
+    <div class="container mt-5">
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Rate Monotonic</h5>
+                <canvas id="rate-monotonic-chart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="container mt-5">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Earliest Deadline First</h5>
+                <canvas id="edf-chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        class Process {
+            constructor(id, executionTime, period) {
+                this.id = id;
+                this.executionTime = executionTime;
+                this.period = period;
+            }
+        }
+
+        document.getElementById("generate-processes").addEventListener("click", function () {
+            const numProcesses = parseInt(document.getElementById("num-processes").value);
+            const processInputs = document.getElementById("process-inputs");
+            processInputs.innerHTML = "";
+
+            for (let i = 1; i <= numProcesses; i++) {
+                const inputGroup = document.createElement("div");
+                inputGroup.className = "input-group mb-3";
+
+                const inputGroupText = document.createElement("span");
+                inputGroupText.className = "input-group-text";
+                inputGroupText.textContent = `P${i} (Execution Time, Time Period)`;
+                inputGroup.appendChild(inputGroupText);
+
+                const executionTimeInput = document.createElement("input");
+                executionTimeInput.type = "number";
+                executionTimeInput.className = "form-control";
+                executionTimeInput.id = `p${i}-execution-time`;
+                executionTimeInput.required = true;
+                inputGroup.appendChild(executionTimeInput);
+
+                const timePeriodInput = document.createElement("input");
+                timePeriodInput.type = "number";
+                timePeriodInput.className = "form-control";
+                timePeriodInput.id = `p${i}-time-period`;
+                timePeriodInput.required = true;
+                inputGroup.appendChild(timePeriodInput);
+
+                processInputs.appendChild(inputGroup);
+            }
+        });
+
+        document.getElementById("process-form").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const numProcesses = parseInt(document.getElementById("num-processes").value);
+            const processes = [];
+
+            for (let i = 1; i <= numProcesses; i++) {
+                const executionTime = parseInt(document.getElementById(`p${i}-execution-time`).value);
+                const timePeriod = parseInt(document.getElementById(`p${i}-time-period`).value);
+                processes.push({ id: `${i}`, executionTime, timePeriod });
+            }
+
+            // Calculate Gantt Chart data for Rate Monotonic and Earliest Deadline First algorithms
+
+            // Rate Monotonic
+
+
+
+
+
+
+
+
+            console.log("processes", processes);
+
+            //clone processes
+            let proc = JSON.parse(JSON.stringify(processes));
+
+
+            // Implement your scheduling algorithms here and generate chartData for both algorithms
+            const rateMonotonicData = scheduleRMS(proc);
+            console.log("RMSdata:", rateMonotonicData);
+
+            proc2 = JSON.parse(JSON.stringify(processes));
+            const edfData = scheduleEDF(proc2);
+            console.log("EDFdata:", edfData);
+
+            console.log("processes after all ops", processes);
+
+            drawGanttChart(rateMonotonicData,"rate-monotonic-chart")
+            drawGanttChart(edfData,"edf-chart");
+
+
+
+
+
+
+
+
+        });
+
+
+        function isRMSSchedulable(processes) {
+            const n = processes.length;
+            const utilizationBound = n * (Math.pow(2, 1 / n) - 1);
+            console.log('RMS UtilisationBound', utilizationBound);
+            const totalUtilization = processes.reduce((acc, process) => acc + process.executionTime / process.timePeriod, 0);
+            console.log('RMS TotalUtilisation', totalUtilization);
+
+            return totalUtilization <= utilizationBound;
+        }
+
+        function scheduleRMS(processes) {
+
+            console.log("RMS array", processes);
+
+
+            if (!isRMSSchedulable(processes)) {
+                return "Not Schedulable"
+            }
+
+
+            const lcm = processes.reduce((acc, process) => Math.lcm(acc, process.timePeriod), 1);
+            console.log("lcm: ", lcm);
+
+            let waitingList = [];
+            let schedule = [];
+
+            for (let i = 0; i < lcm; i++) {
+                // Add processes to waiting list if they arrive at this time
+                for (let j = 0; j < processes.length; j++) {
+                    if (i % processes[j].timePeriod === 0) {
+                        waitingList.push(processes[j]);
+                    }
+                }
+
+                // Sort waiting list by execution time
+                waitingList.sort((a, b) => a.executionTime - b.executionTime);
+
+                // Execute the process with the shortest execution time
+                if (waitingList.length > 0) {
+                    const process = waitingList.shift();
+                    schedule.push({ id: process.id, startTime: i, endTime: i + 1 });
+                    process.executionTime--;
+
+                    // Add process back to waiting list if it is not finished
+                    if (process.executionTime > 0) {
+                        waitingList.push(process);
+                    }
+                }
+            }
+
+
+            //merge adjacent processes of same id and ending time of first process is starting time of second process
+            for (let i = 0; i < schedule.length - 1; i++) {
+                if (schedule[i].id === schedule[i + 1].id && schedule[i].endTime === schedule[i + 1].startTime) {
+                    schedule[i].endTime = schedule[i + 1].endTime;
+                    schedule.splice(i + 1, 1);
+                    i--;
+                }
+            }
+
+            //add idle time to schedule
+            for (let i = 0; i < schedule.length - 1; i++) {
+                if (schedule[i].endTime !== schedule[i + 1].startTime) {
+                    schedule.splice(i + 1, 0, { id: "idle", startTime: schedule[i].endTime, endTime: schedule[i + 1].startTime });
+                    i++;
+                }
+            }
+
+
+            return schedule;
+
+
+
+
+
+
+
+
+
+
+        }
+
+        // Helper function to calculate the least common multiple (LCM) of two numbers
+        Math.lcm = (a, b) => (a * b) / Math.gcd(a, b);
+
+        // Helper function to calculate the greatest common divisor (GCD) of two numbers
+        Math.gcd = (a, b) => (b === 0 ? a : Math.gcd(b, a % b));
+
+
+
+
+        //check if processes are schedulable by EDF
+        function isEDFSchedulable(processes) {
+            let utilization = 0;
+            processes.forEach(process => {
+                utilization += process.executionTime / process.timePeriod;
+            });
+            return utilization <= 1;
+        }
+
+        function scheduleEDF(processes) {
+            if (!isEDFSchedulable(processes)) {
+                console.log("Processes are not schedulable by EDF");
+                return [];
+            }
+
+            processes.sort((a, b) => a.timePeriod - b.timePeriod);
+
+            const schedule = [];
+            let currentTime = 0;
+
+            hyperPeriod = processes.reduce((acc, process) => Math.lcm(acc, process.timePeriod), 1);
+
+            console.log("EDF hyperperiod", hyperPeriod);
+
+
+
+            processes.forEach(process => {
+                const startTime = currentTime;
+                const endTime = startTime + process.executionTime;
+                currentTime = endTime;
+
+                schedule.push({
+                    id: process.id,
+                    startTime,
+                    endTime
+                });
+            });
+
+            //repeat schedule until hyperperiod
+            while (currentTime < hyperPeriod) {
+                schedule.forEach(process => {
+                    const startTime = currentTime;
+                    const endTime = startTime + process.endTime - process.startTime;
+                    currentTime = endTime;
+
+                    schedule.push({
+                        id: process.id,
+                        startTime,
+                        endTime
+                    });
+                });
+            }
+
+
+            //merge adjacent processes of same id and ending time of first process is starting time of second process
+
+            for (let i = 0; i < schedule.length - 1; i++) {
+                if (schedule[i].id === schedule[i + 1].id && schedule[i].endTime === schedule[i + 1].startTime) {
+                    schedule[i].endTime = schedule[i + 1].endTime;
+                    schedule.splice(i + 1, 1);
+                    i--;
+                }
+            }
+
+            //add idle time to schedule with respect to hyperperiod
+            for (let i = 0; i < schedule.length - 1; i++) {
+                if (schedule[i].endTime !== schedule[i + 1].startTime) {
+                    schedule.splice(i + 1, 0, { id: "idle", startTime: schedule[i].endTime, endTime: schedule[i + 1].startTime });
+                    i++;
+                }
+            }
+
+
+            //remove any interval after hyperperiod
+
+            for (let i = 0; i < schedule.length; i++) {
+                if (schedule[i].startTime >= hyperPeriod) {
+                    schedule.splice(i, 1);
+                    i--;
+                }
+            }
+
+            
+            
+
+
+
+            return schedule;
+        }
+
+
+
+        function drawGanttChart(schedules, canvas) {
+
+            //clear canvas
+            const ctxx = document.getElementById(canvas).getContext('2d');
+            ctxx.clearRect(0, 0, 1000, 1000);
+
+            //delete previous chart
+            const chart = document.getElementById(canvas).parentElement;
+            chart.removeChild(chart.lastChild);
+
+
+
+            //if schedules is "Not Schedulable". print not schedulable
+
+            if(schedules === "Not Schedulable")
+            {
+                //write not schedulable in canvas
+                const ctx = document.getElementById(canvas).getContext('2d');
+                ctx.font = "30px Arial";
+                ctx.fillText("Not Schedulable", 10, 50);
+
+                return;
+            }
+
+
+
+
+            // Prepare the data and labels
+            const labels = schedules.map(schedule => "Process id:" + schedule.id);
+            const data = schedules.map(schedule => ({
+                startTime: schedule.startTime,
+                endTime: schedule.endTime,
+                duration: schedule.endTime - schedule.startTime
+            }));
+
+            
+            
+
+
+            // Configure the chart
+            const config = {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Start Time',
+                            data: data.map(item => item.startTime),
+                            backgroundColor: 'transparent',
+                        },
+                        {
+                            label: 'Duration',
+                            data: data.map(item => item.duration),
+                            backgroundColor: 'blue'
+                        },
+                    ],
+                },
+                options: {
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            stacked: true,
+                        },
+                        y: {
+                            stacked: true,
+                        },
+                    },
+                },
+            };
+
+
+
+            // Render the chart
+            const ctx = document.getElementById(canvas).getContext('2d');
+            new Chart(ctx, config);
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </script>
+</body>
+
+</html>
