@@ -19,7 +19,7 @@ To use this project, follow these steps:
 
 1. Clone the repository: `git clone https://github.com/your-username/repository-name.git`
 2. Open the project folder: `cd repository-name`
-3. Open the `index.html` file in your preferred web browser.
+3. Open the `app.html` file in your preferred web browser.
 
 ## Contributing
 
